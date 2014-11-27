@@ -5,8 +5,13 @@ int ejecutar(unsigned int instruccion)
 	int resultado = OK;
 	char registro1, registro2;
 	int valor;
+	int i;
 	char *aux;
-	
+	int aux2;
+	char *lectura;
+	char *bytesAEscribir = malloc(sizeof(int));
+
+	printf("estoy haciendo la instruccion %d\n", instruccion);
 	switch(instruccion)
 	{
 		case LOAD:
@@ -27,13 +32,13 @@ int ejecutar(unsigned int instruccion)
 			registro2 = aux[0];
 			tcb->punteroInstruccion += 1;
 
-			char *lectura = leer_de_memoria(tcb->pid, el_valor_del(registro2), 1);
+			lectura = leer_de_memoria(tcb->pid, el_valor_del(registro2), 1);
 			//si no hubo error
 			escribime_en_el(registro1, (int) lectura[0]);
 			break;
 		case SETM:
 			aux = leer_de_memoria(tcb->pid, tcb->punteroInstruccion, 4);
-			memcpy(&valor, aux, 4);		
+			memcpy(&valor, aux, 4);
 			tcb->punteroInstruccion += 4;
 			aux = leer_de_memoria(tcb->pid, tcb->punteroInstruccion, 1);
 			registro1 = aux[0];
@@ -42,12 +47,10 @@ int ejecutar(unsigned int instruccion)
 			registro2 = aux[0];
 			tcb->punteroInstruccion += 1;
 
-			int aux2;
-			char *bytesAEscribir = malloc(sizeof(int));
 			aux2 = el_valor_del(registro2);
 			memcpy(bytesAEscribir, &aux2, sizeof(int));
 			resultado = escribir_en_memoria(tcb->pid, el_valor_del(registro1), valor, bytesAEscribir);
-			//ver si hubo error			
+			//ver si hubo error
 			break;
 		case MOVR:
 			aux = leer_de_memoria(tcb->pid, tcb->punteroInstruccion, 1);
@@ -57,7 +60,7 @@ int ejecutar(unsigned int instruccion)
 			registro2 = aux[0];
 			tcb->punteroInstruccion += 1;
 
-			escribime_en_el_el(registro1, el_valor_del(registro2));
+			escribime_en_el(registro1, el_valor_del(registro2));
 			break;
 		case ADDR:
 			aux = leer_de_memoria(tcb->pid, tcb->punteroInstruccion, 1);
@@ -123,7 +126,7 @@ int ejecutar(unsigned int instruccion)
 			tcb->punteroInstruccion += 1;
 
 			escribime_en_el(registro1, el_valor_del(registro1) - 1);
-			break;			
+			break;
 		case COMP:
 			aux = leer_de_memoria(tcb->pid, tcb->punteroInstruccion, 1);
 			registro1 = aux[0];
@@ -160,17 +163,17 @@ int ejecutar(unsigned int instruccion)
 			tcb->punteroInstruccion += 1;
 
 			tcb->punteroInstruccion = tcb->baseSegCod + el_valor_del(registro1);
-			break;			
+			break;
 		case JMPZ:
 			aux = leer_de_memoria(tcb->pid, tcb->punteroInstruccion, 4);
-			memcpy(&valor, aux, 4);		
+			memcpy(&valor, aux, 4);
 			tcb->punteroInstruccion += 4;
 
 			if (tcb->a == 0) tcb->punteroInstruccion = tcb->baseSegCod + valor;
 			break;
 		case JPNZ:
 			aux = leer_de_memoria(tcb->pid, tcb->punteroInstruccion, 4);
-			memcpy(&valor, aux, 4);		
+			memcpy(&valor, aux, 4);
 			tcb->punteroInstruccion += 4;
 
 			if (tcb->a != 0) tcb->punteroInstruccion = tcb->baseSegCod + valor;
@@ -181,7 +184,7 @@ int ejecutar(unsigned int instruccion)
 			break;
 		case SHIF:
 			aux = leer_de_memoria(tcb->pid, tcb->punteroInstruccion, 4);
-			memcpy(&valor, aux, 4);		
+			memcpy(&valor, aux, 4);
 			tcb->punteroInstruccion += 4;
 			aux = leer_de_memoria(tcb->pid, tcb->punteroInstruccion, 1);
 			registro1 = aux[0];
@@ -192,34 +195,31 @@ int ejecutar(unsigned int instruccion)
 			break;
 		case NOPP:
 			// No hace nada
-			break;			
+			break;
 		case PUSH:
 			aux = leer_de_memoria(tcb->pid, tcb->punteroInstruccion, 4);
-			memcpy(&valor, aux, 4);		
+			memcpy(&valor, aux, 4);
 			tcb->punteroInstruccion += 4;
 			aux = leer_de_memoria(tcb->pid, tcb->punteroInstruccion, 1);
 			registro1 = aux[0];
 			tcb->punteroInstruccion += 1;
 
-			int aux2;
-			char *bytesAEscribir = malloc(sizeof(int));
 			aux2 = el_valor_del(registro1);
 			memcpy(bytesAEscribir, &aux2, sizeof(int));
 			resultado = escribir_en_memoria(tcb->pid, tcb->cursorStack, valor, bytesAEscribir);
 			//ver si hubo error
-			tcb->cursorStack += numero;
+			tcb->cursorStack += valor;
 			break;
 		case TAKE:
 			aux = leer_de_memoria(tcb->pid, tcb->punteroInstruccion, 4);
-			memcpy(&valor, aux, 4);		
+			memcpy(&valor, aux, 4);
 			tcb->punteroInstruccion += 4;
 			aux = leer_de_memoria(tcb->pid, tcb->punteroInstruccion, 1);
 			registro1 = aux[0];
 			tcb->punteroInstruccion += 1;
 
-			char *lectura = leer_de_memoria(tcb->pid, tcb->cursorStack - valor, valor);
+			lectura = leer_de_memoria(tcb->pid, tcb->cursorStack - valor, valor);
 			//si no hubo error
-			int i;
 			bzero(aux, 4);
 			if (valor < 4) for(i = 3; i > 0; i--)
 			{
@@ -292,6 +292,6 @@ int ejecutar(unsigned int instruccion)
 			puts("Instrucción invalida");
 			exit(1);
 	}
-	
+
 	return resultado;
 }

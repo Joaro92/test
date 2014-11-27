@@ -3,21 +3,22 @@
 int main(int argc, char *argv[])
 {
 	char *instruccionESO;
-	unsigned int instruccion;
+	unsigned int instruccion = 0;
 	int resultadoEjecucion;
 	cargar_archivo_de_configuracion(CONFIG_PATH);
+	int header = 0;
 
 	// Conectar con kernel
-	if (conectar_al(kernel) == -1)
+	if (conectar_al_kernel() == -1)
 	{
 		printf("No se pudo conectar con el kernel\n");
 		exit(1);
 	}
 	printf("\nConexión con kernel establecida\n");
 	enviar_handshake_al_kernel();
-	
+
 	// Conectar con MSP
-	if (conectar_al(msp) == -1)
+	if (conectar_al_msp() == -1)
 	{
 		printf("No se pudo conectar con la MSP\n");
 		exit(1);
@@ -28,7 +29,14 @@ int main(int argc, char *argv[])
 	while(1)
 	{
 		// Recibe desde socket los tcbs que vienen del kernel.
-		tcb = deserializarTCB(kernel.socket);
+		recv(kernel.socket, &header, sizeof(int32_t), 0);
+		if (header == solicitudEjecucion) tcb = deserializarTCB(kernel.socket);
+		else
+		{
+			printf("me mandaron fruta %d", header);
+			exit(1);
+			//analizar porque me mandaron fruta
+		}
 		if (tcb == NULL)
 		{
 			//ver que pasa si no recibimos nada del kernel
@@ -38,7 +46,7 @@ int main(int argc, char *argv[])
 		// Mientras el quantum no se termine y el puntero no llegue a fin de codigo, sigo pidiendo instrucciones a la memoria para ejecutar
 		while (tcb->quantum > 0)
 		{
-			instruccionESO = leer_de_memoria(tcb->PID, tcb->baseSegCod, 4);
+			instruccionESO = leer_de_memoria(tcb->pid, tcb->punteroInstruccion, 4);
 			{
 				//ver que pasa si no recibimos nada de la MSP
 			}
@@ -54,6 +62,7 @@ int main(int argc, char *argv[])
 				//error
 				//analizar los posibles casos de finalizacion
 			}
+			tcb->quantum--;
 			usleep(retardo);
 		}
 	}
@@ -84,22 +93,34 @@ void cargar_archivo_de_configuracion(char *configPath)
 	printf("Retardo ejecución: %d milisegundos\n", retardo / 1000);
 }
 
-int conectar_al(t_socket aux)
+int conectar_al_kernel()
 {
-	int aux.socket = socket(AF_INET, SOCK_STREAM, 0);
+	kernel.socket = socket(AF_INET, SOCK_STREAM, 0);
 	struct sockaddr_in direccion;
-	direccion.sin_addr.s_addr = inet_addr(aux.ip);
-	direccion.sin_port = htons(aux.puerto);
+	direccion.sin_addr.s_addr = inet_addr(kernel.ip);
+	direccion.sin_port = htons(kernel.puerto);
 	direccion.sin_family = AF_INET;
-	return connect(aux.socket, (struct sockaddr *) &direccion, sizeof(struct sockaddr));
+	return connect(kernel.socket, (struct sockaddr *) &direccion, sizeof(struct sockaddr));
+}
+
+int conectar_al_msp()
+{
+	msp.socket = socket(AF_INET, SOCK_STREAM, 0);
+	struct sockaddr_in direccion;
+	direccion.sin_addr.s_addr = inet_addr(msp.ip);
+	direccion.sin_port = htons(msp.puerto);
+	direccion.sin_family = AF_INET;
+	return connect(msp.socket, (struct sockaddr *) &direccion, sizeof(struct sockaddr));
 }
 
 void enviar_handshake_al_kernel()
 {
 	size_t size;
-	void *mensajeSerializado = serializar_handshake(soyCpu, &size); //cambiar esto despues a mayusculas
+	void *mensajeSerializado = serializar_handshake(soyCpu, &size);
 	send(kernel.socket, mensajeSerializado, size, 0);
+	mensajeSerializado = serializar_handshake(estructuraCpu, &size);
 	send(kernel.socket, mensajeSerializado, size, 0); //esta actualmente manejado como 2 handshake seguidos
+	free(mensajeSerializado);
 }
 
 
@@ -115,7 +136,7 @@ void enviar_handshake_al_kernel()
 
 
 
-
+/*
 int enviarTCBAKernel(int socket, int codigoRetorno)
 {
 	char *msgRetorno=string_new();
@@ -173,3 +194,4 @@ char* mapearError(int codigoError) {
 		break;
 	}
 }
+*/

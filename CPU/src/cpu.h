@@ -1,8 +1,8 @@
 #ifndef HEADER_CPU
 #define HEADER_CPU
 
-#include "ejecutar.c"
 #include "cabecera.h"
+#include "ejecutar.h"
 
 
 // MIS VARIABLES -----------------------------------------------------------------
@@ -25,8 +25,9 @@ int protegida;
 
 // Definición de funciones
 void cargar_archivo_de_configuracion(char *configPath);
-int conectar_al(t_socket aux);
-int enviar_handshake_al_kernel();
+int conectar_al_kernel();
+int conectar_al_msp();
+void enviar_handshake_al_kernel();
 
 
 // otros a revisar

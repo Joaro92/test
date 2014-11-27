@@ -160,7 +160,7 @@ char *leer_de_memoria(u_int32_t pid, u_int32_t direccion, u_int32_t tamanio)
 	solicitud.PID = pid;
 	solicitud.tamanio = tamanio;
 	solicitud.dirLogica = direccion;
-	size_t size = sizeof(int32_t) * 2 + sizeof(t_solicitud);
+	size_t size = sizeof(int32_t) * 2 + sizeof(t_solicitar);
 	void *mensajeSerializado = serializar_solicitar_segmento(solicitud, LEERSEG);
 	send(msp.socket, mensajeSerializado, size, 0);
 	free(mensajeSerializado);
@@ -179,6 +179,7 @@ char *leer_de_memoria(u_int32_t pid, u_int32_t direccion, u_int32_t tamanio)
 		//aca se deberia de guardar el error en algun lado
 		return NULL;
 	}
+	exit(1);
 }
 
 int escribir_en_memoria(u_int32_t pid, u_int32_t direccion, u_int32_t tamanio, char *bytesAEscribir)
@@ -191,7 +192,7 @@ int escribir_en_memoria(u_int32_t pid, u_int32_t direccion, u_int32_t tamanio, c
 	size_t size = sizeof(int32_t) * 2 + sizeof(int32_t) * 3 + tamanio;
 	void *mensajeSerializado = serializar_escribir_segmento(solicitud, ESCRIBIRSEG);
 	send(msp.socket, mensajeSerializado, size, 0);
-	free(mensajeSolicitudEscritura);
+	free(mensajeSerializado);
 
 	// ahora esperamos la respuesta
 	int32_t tipo;
@@ -202,6 +203,7 @@ int escribir_en_memoria(u_int32_t pid, u_int32_t direccion, u_int32_t tamanio, c
 		//analizar error
 		return ERROR;
 	}
+	exit(1);
 }
 
 /*
