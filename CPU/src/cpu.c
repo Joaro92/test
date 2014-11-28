@@ -65,8 +65,8 @@ int main(int argc, char *argv[])
 			tcb->quantum--;
 			if (tcb->quantum == 0)
 			{
-				size_t size = sizeof(int32_t) * 13 + sizeof(bool) + 1;
-				char *mensajeSerializado = serializar_envio_TCB(*tcb, finQuantum, "");
+				size_t size = sizeof(int32_t) * 2 + sizeof(t_tcb);
+				char *mensajeSerializado = serializar_envio_TCB(*tcb, finQuantum);
 				send(kernel.socket, mensajeSerializado, size, 0);
 				free(mensajeSerializado);
 			}
